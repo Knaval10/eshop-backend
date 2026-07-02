@@ -1,5 +1,7 @@
+const { logger } = require('../config');
+
 function errorHandler(err, req, res, next) {
-  console.error(err);
+  logger.error(err.stack || err);
 
   // Mongoose invalid ID
   if (err.name === 'CastError') {

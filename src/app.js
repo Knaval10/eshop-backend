@@ -1,25 +1,26 @@
 const express = require('express');
-const productRoutes = require('./modules/products/product.routes');
-const userRoutes = require('./modules/users/user.routes');
-const categoryRoutes = require('./modules/categories/category.routes');
-const cartRoutes = require('./modules/cart/cart.routes');
-const orderRoutes = require('./modules/orders/order.routes');
-const errorHandler = require('./middleware/errorHandler');
+const routes = require('./routes');
+const errorHandler = require('./middlewares/error.middleware');
+const rateLimit = require('./middlewares/rateLimit.middleware');
 
 const app = express();
 
 app.use(express.json());
 
+// Enable trust proxy if behind a load balancer for accurate rate limiter IP detection
+app.set('trust proxy', 1);
+
+// Apply rate limiter to all routes
+app.use(rateLimit);
+
 app.get('/', (req, res) => {
   res.json({ message: 'API is running' });
 });
 
-app.use('/api/products', productRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
+// Mount centralized routes under /api
+app.use('/api', routes);
 
+// Centralized error handling middleware
 app.use(errorHandler);
 
 module.exports = app;
