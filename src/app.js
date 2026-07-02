@@ -2,25 +2,34 @@ const express = require('express');
 const routes = require('./routes');
 const errorHandler = require('./middlewares/error.middleware');
 const rateLimit = require('./middlewares/rateLimit.middleware');
+const { initAdmin } = require('./config/admin.config');
 
-const app = express();
+async function createApp() {
+  const app = express();
 
-app.use(express.json());
+  // Initialize AdminJS and mount router before any other global middlewares to prevent conflicts
+  const { adminRouter, adminJs } = await initAdmin();
+  app.use(adminJs.options.rootPath, adminRouter);
 
-// Enable trust proxy if behind a load balancer for accurate rate limiter IP detection
-app.set('trust proxy', 1);
+  app.use(express.json());
 
-// Apply rate limiter to all routes
-app.use(rateLimit);
+  // Enable trust proxy if behind a load balancer for accurate rate limiter IP detection
+  app.set('trust proxy', 1);
 
-app.get('/', (req, res) => {
-  res.json({ message: 'API is running' });
-});
+  // Apply rate limiter to all routes
+  app.use(rateLimit);
 
-// Mount centralized routes under /api
-app.use('/api', routes);
+  app.get('/', (req, res) => {
+    res.json({ message: 'API is running' });
+  });
 
-// Centralized error handling middleware
-app.use(errorHandler);
+  // Mount centralized routes under /api
+  app.use('/api', routes);
 
-module.exports = app;
+  // Centralized error handling middleware
+  app.use(errorHandler);
+
+  return app;
+}
+
+module.exports = createApp;

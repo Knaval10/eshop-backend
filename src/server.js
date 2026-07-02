@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const app = require('./app');
+const createApp = require('./app');
 const { db, env, logger } = require('./config');
 
 async function startServer() {
@@ -8,6 +8,8 @@ async function startServer() {
     logger.info('Connecting to databases...');
     await db.connectDB();
     logger.info('Databases connected successfully.');
+
+    const app = await createApp();
 
     app.listen(env.port, () => {
       logger.info(`Server running in ${env.env} mode on port ${env.port}`);
